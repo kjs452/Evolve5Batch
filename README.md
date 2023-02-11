@@ -1,2 +1,3 @@
 # Evolve5Batch
-Evolve 5.0 Command Line Batch Simulator
+Evolve 5.0 Command Line Utility to run simulator without GUI
+
