@@ -1,3 +1,3 @@
 # Evolve5Batch
-Evolve 5.0 Command Line Utility to run simulator without GUI
-
+This is the command line program to run the Evolve5
+simulator without the GUI. Works on all platforms.
