@@ -22,6 +22,12 @@
 #include "evolve_simulator.h"
 #include "evolve_simulator_private.h"
 
+/*
+ * when a value to be returned back to the KFORTH_MACHINE is too big, it
+ * exceeds this value. This is max_int.
+ */
+#define TOO_BIG		32767
+
 static KFORTH_OPERATIONS *FindOperations(void);
 
 void OrganismFinder_init(ORGANISM_FINDER *of, const char *find_expr, int reset_tracers)
@@ -272,7 +278,7 @@ static void FindOpcode_STRAIN(KFORTH_OPERATIONS *kfops, KFORTH_PROGRAM *kfp, KFO
 	ofc = (ORGANISM_FINDER*) client_data;
 	o = ofc->organism;
 
-	kforth_data_stack_push(kfm, o->strain+1);
+	kforth_data_stack_push(kfm, o->strain);
 }
 
 static void FindOpcode_ENERGY(KFORTH_OPERATIONS *kfops, KFORTH_PROGRAM *kfp, KFORTH_MACHINE *kfm, void *client_data)
@@ -283,7 +289,7 @@ static void FindOpcode_ENERGY(KFORTH_OPERATIONS *kfops, KFORTH_PROGRAM *kfp, KFO
 
 	ofc = (ORGANISM_FINDER*) client_data;
 	o = ofc->organism;
-	val = (o->energy < 32000) ? o->energy : 32000;
+	val = (o->energy < TOO_BIG) ? o->energy : TOO_BIG;
 	kforth_data_stack_push(kfm, val);
 }
 
@@ -295,7 +301,7 @@ static void FindOpcode_GENERATION(KFORTH_OPERATIONS *kfops, KFORTH_PROGRAM *kfp,
 
 	ofc = (ORGANISM_FINDER*) client_data;
 	o = ofc->organism;
-	val = (o->generation < 32000) ? o->generation : 32000;
+	val = (o->generation < TOO_BIG) ? o->generation : TOO_BIG;
 	kforth_data_stack_push(kfm, val);
 }
 
@@ -307,7 +313,7 @@ static void FindOpcode_NUM_CELLS(KFORTH_OPERATIONS *kfops, KFORTH_PROGRAM *kfp, 
 
 	ofc = (ORGANISM_FINDER*) client_data;
 	o = ofc->organism;
-	val = (o->ncells < 32000) ? o->ncells : 32000;
+	val = (o->ncells < TOO_BIG) ? o->ncells : TOO_BIG;
 	kforth_data_stack_push(kfm, val);
 }
 
@@ -323,7 +329,7 @@ static void FindOpcode_AGE(KFORTH_OPERATIONS *kfops, KFORTH_PROGRAM *kfp, KFORTH
 	o = ofc->organism;
 
 	scaled_age = o->age / 1000;
-	val = (scaled_age < 3200) ? scaled_age : 3200;
+	val = (scaled_age < TOO_BIG) ? scaled_age : TOO_BIG;
 	kforth_data_stack_push(kfm, val);
 }
 
@@ -332,7 +338,8 @@ static void FindOpcode_NCHILDREN(KFORTH_OPERATIONS *kfops, KFORTH_PROGRAM *kfp, 
 	ORGANISM_FINDER *ofc;
 	ORGANISM *organism, *o;
 	UNIVERSE *u;
-	KFORTH_INTEGER num_living_children;
+	KFORTH_INTEGER val;
+	int num_living_children;
 
 	ofc = (ORGANISM_FINDER*) client_data;
 	organism = ofc->organism;
@@ -344,6 +351,8 @@ static void FindOpcode_NCHILDREN(KFORTH_OPERATIONS *kfops, KFORTH_PROGRAM *kfp, 
 			num_living_children += 1;
 		}
 	}
+
+	val = (num_living_children < TOO_BIG) ? num_living_children : TOO_BIG;
 
 	kforth_data_stack_push(kfm, num_living_children);
 }
@@ -409,42 +418,39 @@ static void FindOpcode_NUM_DEAD(KFORTH_OPERATIONS *kfops, KFORTH_PROGRAM *kfp, K
 	kforth_data_stack_push(kfm, num_dead);
 }
 
-// scaled to thousands of energy units		1 = 1000 units
 static void FindOpcode_MAX_ENERGY(KFORTH_OPERATIONS *kfops, KFORTH_PROGRAM *kfp, KFORTH_MACHINE *kfm, void *client_data)
 {
 	ORGANISM_FINDER *ofc;
-	int scaled_energy;
+	int energy;
 	KFORTH_INTEGER val;
 
 	ofc = (ORGANISM_FINDER*) client_data;
-	scaled_energy = ofc->max_energy / 1000;
-	val = (scaled_energy < 32000) ? scaled_energy : 32000;
+	energy = ofc->max_energy;
+	val = (energy < TOO_BIG) ? energy : TOO_BIG;
 	kforth_data_stack_push(kfm, val);
 }
 
-// scaled to thousands of energy units
 static void FindOpcode_MIN_ENERGY(KFORTH_OPERATIONS *kfops, KFORTH_PROGRAM *kfp, KFORTH_MACHINE *kfm, void *client_data)
 {
 	ORGANISM_FINDER *ofc;
-	int scaled_energy;
+	int energy;
 	KFORTH_INTEGER val;
 
 	ofc = (ORGANISM_FINDER*) client_data;
-	scaled_energy = ofc->min_energy / 1000;
-	val = (scaled_energy < 32000) ? scaled_energy : 32000;
+	energy = ofc->min_energy;
+	val = (energy < TOO_BIG) ? energy : TOO_BIG;
 	kforth_data_stack_push(kfm, val);
 }
 
-// 1 = 1000 units of energy
 static void FindOpcode_AVG_ENERGY(KFORTH_OPERATIONS *kfops, KFORTH_PROGRAM *kfp, KFORTH_MACHINE *kfm, void *client_data)
 {
 	ORGANISM_FINDER *ofc;
-	int scaled_energy;
+	int energy;
 	KFORTH_INTEGER val;
 
 	ofc = (ORGANISM_FINDER*) client_data;
-	scaled_energy = ofc->avg_energy / 1000;
-	val = (scaled_energy < 32000) ? scaled_energy : 32000;
+	energy = ofc->avg_energy;
+	val = (energy < TOO_BIG) ? energy : TOO_BIG;
 	kforth_data_stack_push(kfm, val);
 }
 
@@ -457,7 +463,7 @@ static void FindOpcode_MAX_AGE(KFORTH_OPERATIONS *kfops, KFORTH_PROGRAM *kfp, KF
 
 	ofc = (ORGANISM_FINDER*) client_data;
 	scaled_age = ofc->max_age / 1000;
-	val = (scaled_age < 32000) ? scaled_age : 3200;
+	val = (scaled_age < TOO_BIG) ? scaled_age : TOO_BIG;
 	kforth_data_stack_push(kfm, val);
 }
 
@@ -470,7 +476,7 @@ static void FindOpcode_MIN_AGE(KFORTH_OPERATIONS *kfops, KFORTH_PROGRAM *kfp, KF
 
 	ofc = (ORGANISM_FINDER*) client_data;
 	scaled_age = ofc->min_age / 1000;
-	val = (scaled_age < 32000) ? scaled_age : 3200;
+	val = (scaled_age < TOO_BIG) ? scaled_age : TOO_BIG;
 	kforth_data_stack_push(kfm, val);
 }
 
@@ -483,7 +489,7 @@ static void FindOpcode_AVG_AGE(KFORTH_OPERATIONS *kfops, KFORTH_PROGRAM *kfp, KF
 
 	ofc = (ORGANISM_FINDER*) client_data;
 	scaled_age = ofc->avg_age / 1000;
-	val = (scaled_age < 32000) ? scaled_age : 3200;
+	val = (scaled_age < TOO_BIG) ? scaled_age : TOO_BIG;
 	kforth_data_stack_push(kfm, val);
 }
 
@@ -493,7 +499,7 @@ static void FindOpcode_MAX_NUM_CELLS(KFORTH_OPERATIONS *kfops, KFORTH_PROGRAM *k
 	KFORTH_INTEGER val;
 
 	ofc = (ORGANISM_FINDER*) client_data;
-	val = (ofc->max_num_cells < 32000) ? ofc->max_num_cells : 3200;
+	val = (ofc->max_num_cells < TOO_BIG) ? ofc->max_num_cells : TOO_BIG;
 	kforth_data_stack_push(kfm, val);
 }
 

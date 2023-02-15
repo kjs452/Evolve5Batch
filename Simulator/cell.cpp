@@ -897,6 +897,7 @@ static int eat(UNIVERSE *u, ORGANISM *o, CELL *cell, int eat_mode, int x, int y)
 			energy = energy / 2 + energy % 2;
 		} else if( eat_mode & 256 ) {
 			energy = (eato->energy / eato->ncells);
+			energy = energy / 3 + energy % 3;
 		} else {
 			energy = (eato->energy / eato->ncells) + (eato->energy % eato->ncells);
 		}
@@ -3651,7 +3652,7 @@ static void Opcode_WRITE(KFORTH_OPERATIONS *kfops, KFORTH_PROGRAM *kfp, KFORTH_M
 		}
 	}
 
-	if( write_mode & 16 ) {
+	if( (write_mode & 16) == 0 ) {
 		if( gt == GT_CELL ) {
 			// can't write to cells
 			Kforth_Data_Stack_Push(kfm, -8);
@@ -3909,8 +3910,8 @@ static int give_energy(UNIVERSE *u, ORGANISM *o, int send_energy_mode, int x, in
  */
 static void Opcode_SEND_ENERGY(KFORTH_OPERATIONS *kfops, KFORTH_PROGRAM *kfp, KFORTH_MACHINE *kfm, void *client_data)
 {
-	CELL *cell, *c;
-	ORGANISM *org, *o;
+	CELL *cell;
+	ORGANISM *org;
 	UNIVERSE *u;
 	int xoffset, yoffset, x, y;
 	KFORTH_INTEGER value;

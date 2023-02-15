@@ -12,7 +12,7 @@
 
 #define GET_GRID(u, x, y)	(   &(u)->grid[(y)*(u)->width + (x)]   )
 
-#if 1
+#if 0
 /*
  * Debug routine to compute total enerergy in the universe.
  */
@@ -747,6 +747,9 @@ ORGANISM *Universe_CutOrganism(UNIVERSE *u)
 		if( cell == u->current_cell )
 		{
 			u->current_cell = cell->u_next;
+			if( u->current_cell == NULL ) {
+				u->current_cell = u->cells;
+			}
 		}
 
 		if( u->cells == cell ) {
@@ -765,6 +768,7 @@ ORGANISM *Universe_CutOrganism(UNIVERSE *u)
 		cell->u_next = NULL;
 		cell->u_prev = NULL;
 	}
+	
 	return o;
 }
 

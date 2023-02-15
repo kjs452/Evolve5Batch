@@ -2460,8 +2460,6 @@ static void delete_fast_symtabs(KFORTH_SYMTAB** strain_kfst)
 {
 	int i;
 
-	return;
-
 	ASSERT( strain_kfst != NULL );
 
 	for(i=0; i < 8; i++) {

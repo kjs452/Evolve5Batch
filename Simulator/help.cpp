@@ -1151,7 +1151,7 @@ static KFORTH_IHELP Kforth_Instruction_Help_Table[] =
 	"BIGGEST",
 	"BIGGEST",
 	"(mask -- x y)",
-	"Look in all 8 directions. Return a B{non-normalized} (x,y) vector to "
+	"Look in all 8 directions. Return a non-normalized (x,y) vector to "
 	"the biggest thing. This is the organism consisting of the most number of cells. "
 	"The returned (x,y) vector is not normalized. ",
 
@@ -1160,7 +1160,7 @@ static KFORTH_IHELP Kforth_Instruction_Help_Table[] =
 	"SMALLEST",
 	"SMALLEST",
 	"(mask -- x y)",
-	"Look in all 8 directions. Return a B{non-normalized} (x,y) vector to "
+	"Look in all 8 directions. Return a non-normalized (x,y) vector to "
 	"the smallest thing. This is the organism with the least number of cells. "
 	"The returned (x,y) vector is not normalized. ",
 
@@ -1176,7 +1176,7 @@ static KFORTH_IHELP Kforth_Instruction_Help_Table[] =
 	"HOTTEST",
 	"HOTTEST",
 	"(mask -- x y)",
-	"Look in all 8 directions. Return a B{non-normalized} (x,y) vector to "
+	"Look in all 8 directions. Return a non-normalized (x,y) vector to "
 	"the hottest thing. This is the organism with the most energy per cell. "
 	"The returned (x,y) vector is not normalized, so it might return (-6,6) instead of (-1,1). ",
 
@@ -1185,7 +1185,7 @@ static KFORTH_IHELP Kforth_Instruction_Help_Table[] =
 	"COLDEST",
 	"COLDEST",
 	"(mask -- x y)",
-	"Look in all 8 directions. Return a B{non-normalized} (x,y) vector to "
+	"Look in all 8 directions. Return a non-normalized (x,y) vector to "
 	"the coldest thing. This is the organism with the least energy per cell. "
 	"The returned (x,y) vector is not normalized. ",
 
@@ -1349,63 +1349,63 @@ static KFORTH_IHELP Kforth_Instruction_Help_Table[] =
 	"ID",
 	"Find_ID",
 	"( -- id)",
-	"the organism ID. ",
+	"The organism ID (modulos 10,000). ",
 
 
 	MASK_FIND | MASK_F,
 	"PARENT1",
 	"Find_PARENT1",
 	"( -- parent1)",
-	"the parent1 ID. ",
+	"The parent1 ID (modulos 10,000). ",
 
 
 	MASK_FIND | MASK_F,
 	"PARENT2",
 	"Find_PARENT2",
 	"( -- parent2)",
-	"the parent2 ID. ",
+	"The parent2 ID (modulos 10,000). ",
 
 
 	MASK_FIND | MASK_F,
 	"STRAIN",
 	"Find_STRAIN",
 	"( -- strain)",
-	"the strain number. ",
+	"The strain number. ",
 
 
 	MASK_FIND | MASK_F,
 	"ENERGY",
 	"Find_ENERGY",
 	"( -- e)",
-	"the energy. ",
+	"The energy of the organism. ",
 
 
 	MASK_FIND | MASK_F,
 	"GENERATION",
 	"Find_GENERATION",
 	"( -- g)",
-	"the generation. ",
+	"The generation. ",
 
 
 	MASK_FIND | MASK_F,
 	"NUM-CELLS",
 	"Find_NUM_CELLS",
 	"( -- n)",
-	"the number of cells that the organism consists of. ",
+	"The number of cells that the organism consists of. ",
 
 
 	MASK_FIND | MASK_F,
 	"AGE",
 	"Find_AGE",
 	"( -- n)",
-	"the age of the organism. ",
+	"The age of the organism (divided by 1,000). ",
 
 
 	MASK_FIND | MASK_F,
 	"NCHILDREN",
 	"Find_NCHILDREN",
 	"( -- n)",
-	"the number of living children. ",
+	"The number of living children descended from this organism. ",
 
 
 	MASK_FIND | MASK_F,
@@ -1419,28 +1419,28 @@ static KFORTH_IHELP Kforth_Instruction_Help_Table[] =
 	"NUM-CB",
 	"Find_NUM_CB",
 	"( -- n)",
-	"the total number of code blocks the organism has. ",
+	"The total number of code blocks the organism has. ",
 
 
 	MASK_FIND | MASK_F,
 	"NUM-DEAD",
 	"Find_NUM_DEAD",
 	"( -- n)",
-	"the number of cells that have just dies (colored red). ",
+	"The number of cells that have just dies (colored red). ",
 
 
 	MASK_FIND | MASK_F,
 	"MAX-ENERGY",
 	"Find_MAX_ENERGY",
 	"( -- e)",
-	"Constant: for all organisms return the MAXIMUM energy amount ",
+	"Constant: for all organisms return the MAXIMUM energy amount. ",
 
 
 	MASK_FIND | MASK_F,
 	"MIN-ENERGY",
 	"Find_MIN_ENERGY",
 	"( -- e)",
-	"Constant: for all organisms return the MINIMUM energy amount ",
+	"Constant: for all organisms return the MINIMUM energy amount. ",
 
 
 	MASK_FIND | MASK_F,
@@ -1454,21 +1454,21 @@ static KFORTH_IHELP Kforth_Instruction_Help_Table[] =
 	"MAX-AGE",
 	"Find_MAX_AGE",
 	"( -- n)",
-	"Constant: for all organisms return the MAXIMUM age. ",
+	"Constant: for all organisms return the MAXIMUM age (divided by 1,000). ",
 
 
 	MASK_FIND | MASK_F,
 	"MIN-AGE",
 	"Find_MIN_AGE",
 	"( -- n)",
-	"Constant: for all organisms return the MINIMUM age. ",
+	"Constant: for all organisms return the MINIMUM age (divided by 1,000). ",
 
 
 	MASK_FIND | MASK_F,
 	"AVG-AGE",
 	"Find_AVG_AGE",
 	"( -- n)",
-	"Constant: for all organisms return the AVERAGE age. ",
+	"Constant: for all organisms return the AVERAGE age (divided by 1,000). ",
 
 
 	MASK_FIND | MASK_F,

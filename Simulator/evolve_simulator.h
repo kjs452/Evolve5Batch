@@ -503,6 +503,9 @@ extern KFORTH_SYMTAB *kforth_symtab_make(KFORTH_OPERATIONS *kfops);
 extern void		kforth_symtab_delete(KFORTH_SYMTAB *kfst);
 extern KFORTH_PROGRAM *kforth_compile_kfst(const char *program_text, KFORTH_SYMTAB *kfst, KFORTH_OPERATIONS *kfops, char *errbuf);
 
+extern char *kforth_metadata_comment_make(int strain, STRAIN_OPTIONS *strop, KFORTH_MUTATE_OPTIONS *kfmo, KFORTH_OPERATIONS *kfops, KFORTH_PROGRAM *kfp);
+extern void kforth_metadata_comment_delete(char *str);
+
 /*
  * cell.cpp
  */

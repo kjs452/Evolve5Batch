@@ -68,7 +68,7 @@ static int hash(const char *str)
 	unsigned long hash = 5381;
 	int ch;
 
-	while( ch = *str++ ) {
+	while( (ch = *str++) ) {
 		ch = tolower(ch);
 		hash = ((hash << 5) + hash) + ch;		// hash * 33 + c
 	}
@@ -147,6 +147,7 @@ static int lookup_opcode_sym(KFORTH_SYMTAB *kfst, KFORTH_OPERATIONS *kfops, char
 	return -1;
 }
 
+#ifndef KFORTH_COMPILE_FAST
 /*
  * Return the opcode that corresponds to 'word' (or return -1).
  */
@@ -165,6 +166,7 @@ static int lookup_opcode(KFORTH_OPERATIONS *kfops, char *word)
 
 	return -1;
 }
+#endif
 
 struct kforth_label_usage {
 	int lineno;
@@ -1250,4 +1252,180 @@ int kforth_remap_instructions_cb(KFORTH_OPERATIONS* kfops1, KFORTH_OPERATIONS* k
 	}
 
 	return ! fail;
+}
+
+/*
+ * copy 'thing' string to *dst.
+ * set dst to point to the null after copied string.
+ */
+static void comment_add(char **dst, const char *thing)
+{
+	char *r;
+	const char *q;
+
+	r = *dst;
+	q = thing;
+	while( *q != '\0' ) {
+		*r++ = *q++;
+	}
+	*r = '\0';
+
+	*dst = r;
+}
+
+/*
+ * add mode if non-zero. check width, add newline if width reached
+ */
+static void comment_add_prop(int value, const char *property, char **dst, int *width)
+{
+	int MAX_WIDTH = 55;
+	char buf[ 1000 ];
+
+	if( value != 0 ) {
+		if( *width == 0 ) {
+			comment_add(dst, ";    ");
+			*width += 5;
+		}
+
+		snprintf(buf, sizeof(buf), "%s=%d ", property, value);
+		comment_add(dst, buf);
+
+		*width += strlen(buf);
+		if( *width >= MAX_WIDTH ) {
+			comment_add(dst, "\n");
+			*width = 0;
+		}
+	}
+}
+
+/*
+ * add mode if non-zero. check width, add newline if width reached
+ */
+static void comment_add_instr(const char *name, char **dst, int *width)
+{
+	int MAX_WIDTH = 55;
+	char buf[ 1000 ];
+
+	if( *width == 0 ) {
+		comment_add(dst, ";    ");
+		*width += 5;
+	}
+
+	snprintf(buf, sizeof(buf), "%s ", name);
+	comment_add(dst, buf);
+
+	*width += strlen(buf);
+	if( *width >= MAX_WIDTH ) {
+		comment_add(dst, "\n");
+		*width = 0;
+	}
+}
+
+/*
+ * Construct a string that is a KFORTH comment.
+ * This string encodes all the protections, modes and mutation
+ * settings. Anything that is 0 is omitted.
+ *
+ * width = 55
+*******************************************************
+; Strain 7: nibbler
+; Protected Code Blocks: 2
+; Protected Instructions: MAKE-SPORE SPAWN FOOP YOU dup
+;    crap R0 R1 R9 TRAP9 TRAP7 TRAP6 EAT SEND-ENERGY
+; Instruction Modes: EM=1664 GS=20 GE=100 SE=0 MOM=0
+;     MBM=0 SEM=0 KPM=0 SM=0 LM=0 SHM=0 CMM=0 CSM=0
+;     OMM=0 EXM=0 RDM=0 WRM=0 SAM=0 RM=0
+; MaxApply=10 MaxCB=30 MergeMode=0 StrandLen=4
+;
+ *
+ */
+char *kforth_metadata_comment_make(int strain, STRAIN_OPTIONS *strop, KFORTH_MUTATE_OPTIONS *kfmo, KFORTH_OPERATIONS *kfops, KFORTH_PROGRAM *kfp)
+{
+	char result[ 10*1000 ];
+	char buf[ 1000 ];
+	char *p;
+	int width, i;
+
+	ASSERT( strain >= 0 && strain <= 7 );
+	ASSERT( strop != NULL );
+	ASSERT( kfmo != NULL );
+	ASSERT( kfops != NULL );
+	ASSERT( kfp != NULL );
+
+	p = result;
+
+	snprintf(buf, sizeof(buf), "; Strain %d: %s\n", strain, strop->name);
+	comment_add(&p, buf);
+
+	snprintf(buf, sizeof(buf), "; Protected Code Blocks: %d\n", kfp->nprotected);
+	comment_add(&p, buf);
+
+	snprintf(buf, sizeof(buf), "; Protected Instructions: ");
+	comment_add(&p, buf);
+
+	width = strlen("; Protected Instructions: ");
+
+	for(i=0; i < kfops->nprotected; i++) {
+		comment_add_instr(kfops->table[i].name, &p, &width);
+	}
+
+	if( width != 0 ) {
+		comment_add(&p, "\n");
+		width = 0;
+	}
+
+	snprintf(buf, sizeof(buf), "; Instruction Modes: ");
+	comment_add(&p, buf);
+
+	width = strlen("; Instruction Modes: ");
+
+	comment_add_prop(strop->look_mode, "LM", &p, &width);
+	comment_add_prop(strop->eat_mode, "EAM", &p, &width);
+	comment_add_prop(strop->make_spore_mode, "MSM", &p, &width);
+	comment_add_prop(strop->make_spore_energy, "MSE", &p, &width);
+	comment_add_prop(strop->cmove_mode, "CMM", &p, &width);
+	comment_add_prop(strop->omove_mode, "OMM", &p, &width);
+	comment_add_prop(strop->grow_mode, "GM", &p, &width);
+	comment_add_prop(strop->grow_energy, "GE", &p, &width);
+	comment_add_prop(strop->grow_size, "GS", &p, &width);
+	comment_add_prop(strop->rotate_mode, "ROM", &p, &width);
+	comment_add_prop(strop->cshift_mode, "CSM", &p, &width);
+	comment_add_prop(strop->make_organic_mode, "MOM", &p, &width);
+	comment_add_prop(strop->make_barrier_mode, "MBM", &p, &width);
+	comment_add_prop(strop->exude_mode, "EXM", &p, &width);
+	comment_add_prop(strop->shout_mode, "SHM", &p, &width);
+	comment_add_prop(strop->spawn_mode, "SPM", &p, &width);
+	comment_add_prop(strop->listen_mode, "LIM", &p, &width);
+	comment_add_prop(strop->broadcast_mode, "BM", &p, &width);
+	comment_add_prop(strop->say_mode, "SAM", &p, &width);
+	comment_add_prop(strop->send_energy_mode, "SEM", &p, &width);
+	comment_add_prop(strop->read_mode, "RDM", &p, &width);
+	comment_add_prop(strop->write_mode, "WRM", &p, &width);
+	comment_add_prop(strop->key_press_mode, "KPM", &p, &width);
+	comment_add_prop(strop->send_mode, "SNDM", &p, &width);
+
+	if( width != 0 ) {
+		comment_add(&p, "\n");
+		width = 0;
+	}
+
+	comment_add(&p, "; ");
+	width = 2;
+	comment_add_prop(kfmo->max_apply, "MaxApply", &p, &width);
+	comment_add_prop(kfmo->max_code_blocks, "MaxCB", &p, &width);
+	comment_add_prop(kfmo->merge_mode, "MergeMode", &p, &width);
+	comment_add_prop(kfmo->xlen, "StrandLen", &p, &width);
+
+	if( width != 0 ) {
+		comment_add(&p, "\n");
+		width = 0;
+	}
+
+	return STRDUP(result);
+}
+
+void kforth_metadata_comment_delete(char *str)
+{
+	ASSERT( str != NULL );
+	FREE(str);
 }

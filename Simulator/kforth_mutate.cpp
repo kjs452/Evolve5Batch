@@ -17,7 +17,7 @@
  * will use segments lengths smaller than XLEN)
  *
  */
-#define XLEN 4
+#define XLEN_MAX 100		/* maximum value the kfmo->xlen can be (usually this value ranges from 1 to 10, defaults to 4) */
 
 /*
  * return a random number between a and b. (including a and b)
@@ -30,6 +30,7 @@
 static void choose_instruction(EVOLVE_RANDOM *er, KFORTH_OPERATIONS *kfops, KFORTH_MUTATE_OPTIONS *kfmo, KFORTH_INTEGER *value)
 {
 	long x;
+	int NUMB_NEW = 99;
 
 	ASSERT( kfops != NULL );
 	ASSERT( kfmo != NULL );
@@ -50,7 +51,7 @@ static void choose_instruction(EVOLVE_RANDOM *er, KFORTH_OPERATIONS *kfops, KFOR
 		/*
 		 * 1/2 of the time we chose a number
 		 */
-		*value = 0x8000 | CHOOSE(er, -99, 99);
+		*value = 0x8000 | CHOOSE(er, -NUMB_NEW, NUMB_NEW);
 	} else {
 		/*
 		 * 1/2 of the time we chose an instruction
@@ -64,7 +65,7 @@ static void choose_instruction(EVOLVE_RANDOM *er, KFORTH_OPERATIONS *kfops, KFOR
  *
  *	- modify the instuction (cb, pc)
  *	- (cb, pc) must be a valid instruction
- *	- pick a random number between -XLEN and XLEN. If 0, swap sign, otherwise add it to the
+ *	- pick a random number between -NUMB and NUMB. If 0, swap sign, otherwise add it to the
  *	  number.
  *	- if not a number, change instruction to something different (but not to a number)
  *
@@ -75,6 +76,7 @@ static void modify_single_instruction(EVOLVE_RANDOM *er, KFORTH_MUTATE_OPTIONS *
 				KFORTH_PROGRAM *kfp, int cb, int pc )
 {
 	int delta;
+	int NUMB = 4;		/* new numbers are picked from -NUMB ... +NUMB */
 	KFORTH_INTEGER value;
 
 	ASSERT( er != NULL );
@@ -92,7 +94,7 @@ static void modify_single_instruction(EVOLVE_RANDOM *er, KFORTH_MUTATE_OPTIONS *
 			value |= 0x8000;		// sign extend
 		}
 
-		delta = CHOOSE(er, -XLEN, XLEN);
+		delta = CHOOSE(er, -NUMB, NUMB);
 		if( delta == 0 ) {
 			/*
 			 * swap sign
@@ -101,7 +103,7 @@ static void modify_single_instruction(EVOLVE_RANDOM *er, KFORTH_MUTATE_OPTIONS *
 
 		} else {
 			/*
-			 * Increment or Decrement by 1 - XLEN
+			 * Increment or Decrement by 1 - NUMB
 			 */
 			value += delta;
 		}
@@ -202,7 +204,7 @@ static void duplicate_code_block(KFORTH_PROGRAM *kfp, KFORTH_MUTATE_OPTIONS *kfm
 static void duplicate_instruction(KFORTH_PROGRAM *kfp, KFORTH_MUTATE_OPTIONS *kfmo, EVOLVE_RANDOM *er)
 {
 	int cb, pc, block_len, len, i;
-	KFORTH_INTEGER save[XLEN];
+	KFORTH_INTEGER save[XLEN_MAX];
 
 	ASSERT( kfp != NULL );
 	ASSERT( er != NULL );
@@ -219,7 +221,7 @@ static void duplicate_instruction(KFORTH_PROGRAM *kfp, KFORTH_MUTATE_OPTIONS *kf
 	if( block_len == 0 )
 		return;
 
-	len = CHOOSE(er, 1, ((block_len < XLEN) ? block_len : XLEN) );
+	len = CHOOSE(er, 1, ((block_len < kfmo->xlen) ? block_len : kfmo->xlen) );
 
 	/*
 	 * pick random instructions to duplicate
@@ -321,7 +323,7 @@ static void delete_instruction(KFORTH_PROGRAM *kfp, KFORTH_MUTATE_OPTIONS *kfmo,
 	if( block_len == 0 )
 		return;
 
-	len = CHOOSE(er, 1, ((block_len < XLEN) ? block_len : XLEN) );
+	len = CHOOSE(er, 1, ((block_len < kfmo->xlen) ? block_len : kfmo->xlen) );
 
 	pc = CHOOSE(er, 0, block_len - len);
 
@@ -380,7 +382,7 @@ static void insert_code_block(KFORTH_OPERATIONS *kfops, KFORTH_PROGRAM *kfp, KFO
 	 * create code block at 'cb'
 	 * Random length between 0 and XLEN.
 	 */
-	len = CHOOSE(er, 0, XLEN);
+	len = CHOOSE(er, 0, kfmo->xlen);
 	kfp->block[cb] = ((KFORTH_INTEGER*) CALLOC(len+1, sizeof(KFORTH_INTEGER))) + 1;
 
 	for(pc=0; pc < len; pc++) {
@@ -397,7 +399,7 @@ static void insert_code_block(KFORTH_OPERATIONS *kfops, KFORTH_PROGRAM *kfp, KFO
 static void insert_instruction(KFORTH_OPERATIONS *kfops, KFORTH_PROGRAM *kfp, KFORTH_MUTATE_OPTIONS *kfmo, EVOLVE_RANDOM *er)
 {
 	int cb, pc, block_len, len, i;
-	KFORTH_INTEGER value[XLEN];
+	KFORTH_INTEGER value[XLEN_MAX];
 
 	ASSERT( kfp != NULL );
 	ASSERT( kfops != NULL );
@@ -416,7 +418,7 @@ static void insert_instruction(KFORTH_OPERATIONS *kfops, KFORTH_PROGRAM *kfp, KF
 	/*
 	 * Pick 1 to XLEN random instructions.
 	 */
-	len = CHOOSE(er, 1, XLEN);
+	len = CHOOSE(er, 1, kfmo->xlen);
 	for(i=0; i<len; i++) {
 		choose_instruction(er, kfops, kfmo, &value[i]);
 	}
@@ -484,7 +486,7 @@ static void transpose_instruction(KFORTH_PROGRAM *kfp, KFORTH_MUTATE_OPTIONS *kf
 	int block_len1, block_len2;
 	int len, i;
 
-	KFORTH_INTEGER save_value[XLEN];
+	KFORTH_INTEGER save_value[XLEN_MAX];
 
 	ASSERT( kfp != NULL );
 	ASSERT( er != NULL );
@@ -511,9 +513,9 @@ static void transpose_instruction(KFORTH_PROGRAM *kfp, KFORTH_MUTATE_OPTIONS *kf
 	 * compute, len = MIN(XLEN, block_len1, block_len2)
 	 */
 	if( block_len1 < block_len2 ) {
-		len = CHOOSE(er, 1, (block_len1 < XLEN) ? block_len1 : XLEN);
+		len = CHOOSE(er, 1, (block_len1 < kfmo->xlen) ? block_len1 : kfmo->xlen);
 	} else {
-		len = CHOOSE(er, 1, (block_len2 < XLEN) ? block_len2 : XLEN);
+		len = CHOOSE(er, 1, (block_len2 < kfmo->xlen) ? block_len2 : kfmo->xlen);
 	}
 
 	pc1 = CHOOSE(er, 0, block_len1-len);
@@ -589,7 +591,7 @@ static void modify_instruction(KFORTH_OPERATIONS *kfops, KFORTH_PROGRAM *kfp, KF
 	if( block_len == 0 )
 		return;
 
-	len = CHOOSE(er, 1, ((block_len < XLEN) ? block_len : XLEN) );
+	len = CHOOSE(er, 1, ((block_len < kfmo->xlen) ? block_len : kfmo->xlen) );
 	pc = CHOOSE(er, 0, block_len - len);
 
 	for(i=0; i<len; i++) {
@@ -763,15 +765,15 @@ void kforth_mutate_cb(KFORTH_OPERATIONS *kfops,
  * Merge kfp1 and kfp2 and put the result into kfp
  *
  * Algorithm:
- * - Pick a 32-bit 'mask' parameter
+ * - Pick a 16-bit 'mask' parameter (based on mode/random)
  * - Iterate over each program
  * - A 0 bit in the mask pattern takes from kfp1
  * - A 1 bit in the mask pattern takes from kfp2
- * - If the 32-bits are exhausted, the mask is repeated.
+ * - If the 16-bits are exhausted, the mask is repeated.
  *
  * Example,
  *
- * If mask is 0000 0000 1011 0001   1111 0100 0100 0100
+ * If mask is 0000 0000 1011 0001
  *
  *	PROGRAM 1	PROGRAM 2	RESULT
  *	---------	---------	----------
@@ -779,8 +781,8 @@ void kforth_mutate_cb(KFORTH_OPERATIONS *kfops,
  *	JUNK		CRAP		JUNK
  *	FOOBAR		GREPLINUX	FOOBAR
  *	STUFF		XXYYZZ		STUFF
- *	SUPERDUPER	FOOFOOFOO	FOOFOOFOO
- *	FOO12h		FOO666		FOO666
+ *	SUPERDUPER	FOOFOOFOO	SUPERDUPER
+ *	FOO12h		FOO666		FOO12h
  *	HHIIGG					HHIIGG
  *	HHUUPP					HHUUPP
  *	JJJJJJ					JJJJJJ
@@ -790,8 +792,6 @@ void kforth_mutate_cb(KFORTH_OPERATIONS *kfops,
  * If programs have different number of code blocks, then
  * extra code blocks from the longer program are appended
  * to the new program.
- *
- * NOTE: kforth_merge(m, x, x) is allowed, and will return a copy of 'x'
  *
  */
 void kforth_merge2(EVOLVE_RANDOM *er, KFORTH_MUTATE_OPTIONS *kfmo, KFORTH_PROGRAM *kfp1, KFORTH_PROGRAM *kfp2, KFORTH_PROGRAM *kfp)
@@ -808,22 +808,23 @@ void kforth_merge2(EVOLVE_RANDOM *er, KFORTH_MUTATE_OPTIONS *kfmo, KFORTH_PROGRA
 	ASSERT( kfp != NULL );
 
 	if( kfmo->merge_mode == 0 ) {
-		// Merge deterministically alternating code blocks
+		// Merge using a random 16-bit bit string.
+		mask = CHOOSE(er, 0x0000, 0xFFFF);
+
 	} else if( kfmo->merge_mode == 1 ) {
-		// Merge using a random bit string and choose code blocks based on this bit
+		// Merge using parent1 (kfp1) first, then alternate derministically
+		mask = 0xAAAA;			// 1010101010101010
+
 	} else if( kfmo->merge_mode == 2 ) {
-		// Merge using a random bit string. Iterate over all code blocks and all
-		// instructions. Use the bit string to decide which INSTRUCTION to keep.
-	} else if( kfmo->merge_mode == 3 ) {
-		// I dunno, you think of something
+		// Merge using parent2 (kfp2) first, then alternate deterministically
+		mask = 0x5555;			// 0101010101010101
 	}
 
-	mask = CHOOSE(er, 0x0000, 0xFFFF);
-
-	if( mask & 0x0001 )
+	if( kfp1->nblocks > kfp2->nblocks ) {
 		kfp->nblocks = kfp1->nblocks;
-	else
+	} else {
 		kfp->nblocks = kfp2->nblocks;
+	}
 
 	kfp->nprotected = (kfp1->nprotected > kfp2->nprotected) ? kfp1->nprotected : kfp2->nprotected ;
 
