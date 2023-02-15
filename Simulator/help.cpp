@@ -961,9 +961,10 @@ static KFORTH_IHELP Kforth_Instruction_Help_Table[] =
 	"ROTATE",
 	"ROTATE",
 	"( n -- r )",
-	"rotate organism. "
-	"rotate in 45 degree units. positive values are "
-	"clockwise rotations, and negative values are counter-clockwise. "
+	"Rotate the organism by 45 degree units around the cell that executes "
+	"this instruction. The rotate direction is given by 'n'. A positive 'n' rotates the "
+	"organism clock-wise 45 degrees. A negative 'n' rotates the "
+	"organism 45 degrees counter-clockwise. "
 	"On success r is number of cells rotated. ",
 
 

@@ -675,6 +675,10 @@ static void disassembly_fmt(char *buf, const char *fmt, ...)
  * If 'want_cr' is non-zero then we terminate lines with \r\n instead of
  * just \n. (this is needed when populating windows CEdit controls!!!).
  *
+ * This is also needed by MacOS NNSTextView, the breakpoint symbol
+ * will be positioned incorrectly if want_cr isn't 1.
+ * (ViewOrganism screen, KforthInterpreter screen)
+ *
  * HOW TO USE POS TABLE:
  *	The 'pos' table allows the caller to map a (cb, pc) to text contained
  *	int program_text. Simply scan the table (from 0 .. pos_len) looking for

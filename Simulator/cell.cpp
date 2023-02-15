@@ -1275,20 +1275,20 @@ static void rotate(int n, int origin_x, int origin_y, int x, int y, int *newx, i
 
 	case  1:
 	case -3:
-		new_xoffset = yoffset * -1;
-		new_yoffset = xoffset *  1;
+		new_xoffset = yoffset *  1;
+		new_yoffset = xoffset * -1;
 		break;
 
 	case  2:
 	case -2:
-		new_xoffset = xoffset * -1;
-		new_yoffset = yoffset * -1;
+		new_xoffset = xoffset *  1;
+		new_yoffset = yoffset *  1;
 		break;
 
 	case  3:
 	case -1:
-		new_xoffset = yoffset *  1;
-		new_yoffset = xoffset * -1;
+		new_xoffset = yoffset * -1;
+		new_yoffset = xoffset *  1;
 		break;
 
 	default:
@@ -1303,7 +1303,7 @@ static void rotate(int n, int origin_x, int origin_y, int x, int y, int *newx, i
 #define ABS(x)		((x<0) ? -x : x)
 #define MAX(x,y)	((x>y) ?  x : y)
 
-static void rotateCW(int origin_x, int origin_y, int px, int py, int *newx, int *newy)
+static void rotateCCW(int origin_x, int origin_y, int px, int py, int *newx, int *newy)
 {
 	int x, y, shell;
 
@@ -1346,7 +1346,7 @@ static void rotateCW(int origin_x, int origin_y, int px, int py, int *newx, int 
 	*newy = origin_y + y;
 }
 
-static void rotateCCW(int origin_x, int origin_y, int px, int py, int *newx, int *newy)
+static void rotateCW(int origin_x, int origin_y, int px, int py, int *newx, int *newy)
 {
 	int x, y, shell;
 
