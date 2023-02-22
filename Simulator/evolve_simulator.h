@@ -657,8 +657,11 @@ extern void EvolvePreferences_Delete(EVOLVE_PREFERENCES* ep);
 extern void EvolvePreferences_Add_StrainProfile(EVOLVE_PREFERENCES* ep, STRAIN_PROFILE *sp);
 extern void EvolvePreferences_Clear_StrainProfiles(EVOLVE_PREFERENCES* ep);
 extern STRAIN_PROFILE *EvolvePreferences_Get_StrainProfile(EVOLVE_PREFERENCES* ep, int i);
-extern void EvolvePreferences_Create_From_Scratch(EVOLVE_PREFERENCES *ep);
-extern int  EvolvePreferences_Load_Or_Create_From_Scratch(EVOLVE_PREFERENCES *ep, const char *filename, char *errbuf);
+extern void EvolvePreferences_Create_From_Scratch(EVOLVE_PREFERENCES *ep, const char *appdir);
+extern int EvolvePreferences_Load_Or_Create_From_Scratch(EVOLVE_PREFERENCES *ep,
+							const char *filename,
+							const char *appdir,
+							char *errbuf );
 extern char* Evolve_Version();
 
 /*

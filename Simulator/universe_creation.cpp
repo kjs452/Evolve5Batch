@@ -707,16 +707,28 @@ extern STRAIN_PROFILE *EvolvePreferences_Get_StrainProfile(EVOLVE_PREFERENCES* e
 	return &ep->strain_profiles[i];
 }
 
+static void join_seed_file(char *seed_file, int n, const char *appdir, const char *fname)
+{
+	ASSERT( seed_file != NULL );
+	ASSERT( appdir != NULL );
+	ASSERT( fname != NULL );
+
+	strlcat(seed_file, appdir, n);
+	strlcat(seed_file, "/", n);
+	strlcat(seed_file, fname, n);
+}
+
 /***********************************************************************
  * Create the first Evolve_Preferences for the application when
  * there was nothing to read from an existing ~/.evolve5rc file
  *
  */
-void EvolvePreferences_Create_From_Scratch(EVOLVE_PREFERENCES *ep)
+void EvolvePreferences_Create_From_Scratch(EVOLVE_PREFERENCES *ep, const char *appdir)
 {
 	int i;
 
 	ASSERT( ep != NULL );
+	ASSERT( appdir != NULL );
 
 	EvolvePreferences_Init(ep);
 
@@ -731,7 +743,7 @@ void EvolvePreferences_Create_From_Scratch(EVOLVE_PREFERENCES *ep)
 	ep->dflt[0].profile_idx	= 0;
 	ep->dflt[0].energy			= 1000000;
 	ep->dflt[0].population		= 100;
-	strlcat(ep->dflt[0].seed_file, "", sizeof(ep->dflt[0].seed_file));
+	join_seed_file(ep->dflt[0].seed_file, sizeof(ep->dflt[0].seed_file), appdir, "seed.kf");
 
 	for(i=1; i < 8; i++) {
 		ep->dflt[i].profile_idx = -1;
@@ -739,15 +751,19 @@ void EvolvePreferences_Create_From_Scratch(EVOLVE_PREFERENCES *ep)
 
 	//////////////////////////
 	//
-	// add strain profile 0
+	// add strain profile Default
 	//
 	STRAIN_PROFILE sp;
 
 	StrainProfile_Init(&sp);
 
 	strlcat(sp.name, 				"Default", sizeof(sp.name));
-	strlcat(sp.seed_file,			"/tmp/default.kf", sizeof(sp.seed_file));
-	strlcat(sp.description,			"Default. A Creature\nThat\nJust Works.", sizeof(sp.description));
+	join_seed_file(sp.seed_file, sizeof(sp.seed_file), appdir, "seed.kf");
+	strlcat(sp.description,
+					"Default. A Creature\n"
+					"That\n"
+					"Just Works.\n"
+					, sizeof(sp.description));
 	sp.energy						= 100000;
 	sp.population					= 10;
 	kforth_mutate_options_defaults(&sp.kfmo);
@@ -757,72 +773,435 @@ void EvolvePreferences_Create_From_Scratch(EVOLVE_PREFERENCES *ep)
 	kforth_ops_set_protected(&sp.kfops, "MAKE-BARRIER");
 
 	sp.strop.enabled				= 1;	// indicates if this strain is enabled or not
-	sp.strop.name[0]				= 0;	// strain name, not meaningful here
-	sp.strop.look_mode				= 1;	// LOOK: 0=default/original. 1=cannot see thru self.
-	sp.strop.eat_mode				= 0;	// EAT: 0=default/original. 1=can eat self, killing self.
-	sp.strop.make_spore_mode		= 0;	// MAKE-SPORE mode
-	sp.strop.make_spore_energy		= 100;	// MAKE-SPORE energy
-	sp.strop.cmove_mode				= 0;	// CMOVE: 0=default.
-	sp.strop.omove_mode				= 0;	// OMOVE 0=default.
-	sp.strop.grow_mode				= 0;	// GROW mode
-	sp.strop.grow_energy			= 10;	// GROW energy
-	sp.strop.grow_size				= 20;	// GROW size
-	sp.strop.rotate_mode			= 1;	// ROTATE: 0=default 90 deg. 1=45 deg (if diagonal) must use center point of orgnism
-	sp.strop.cshift_mode			= 0;	// CSHIFT: 0=default.
-	sp.strop.make_organic_mode		= 0;	// MAKE-ORGANIC: 0=default
+	strcpy(sp.strop.name, sp.name);			// strain name, not meaningful here
+
+	sp.strop.look_mode			= 1;
+	sp.strop.eat_mode			= 0;
+	sp.strop.make_spore_mode	= 0;
+	sp.strop.make_spore_energy	= 10;
+	sp.strop.cmove_mode			= 0;
+	sp.strop.omove_mode			= 0;
+	sp.strop.grow_mode			= 0;
+	sp.strop.grow_energy		= 10;
+	sp.strop.grow_size			= 20;
+	sp.strop.rotate_mode		= 1;
+	sp.strop.cshift_mode		= 0;
+	sp.strop.make_organic_mode	= 0;
+	sp.strop.make_barrier_mode	= 0;
+	sp.strop.exude_mode			= 0;
+	sp.strop.shout_mode			= 0;
+	sp.strop.spawn_mode			= 0;
+	sp.strop.listen_mode		= 0;
+	sp.strop.broadcast_mode		= 0;
+	sp.strop.say_mode			= 0;
+	sp.strop.send_energy_mode	= 0;
+	sp.strop.read_mode			= 0;
+	sp.strop.write_mode			= 0;
+	sp.strop.key_press_mode		= 0;
+	sp.strop.send_mode			= 0;
 
 	EvolvePreferences_Add_StrainProfile(ep, &sp);
 
+	//////////////////////////
+	//
+	// add strain profile Basic
+	//
+
 	StrainProfile_Init(&sp);
-	strlcat(sp.name, 				"Evolve4.8e", sizeof(sp.name));
-	strlcat(sp.seed_file,			"/tmp/seed48.kf", sizeof(sp.seed_file));
-	strlcat(sp.description,			"Original Evolve4.8e behavior", sizeof(sp.description));
+	strlcat(sp.name, 				"Basic", sizeof(sp.name));
+	join_seed_file(sp.seed_file, sizeof(sp.seed_file), appdir, "seed.kf");
+	strlcat(sp.description,
+					"Basic creature.\n"
+					"Agressive Eater\n"
+					, sizeof(sp.description));
 	sp.energy						= 100000;
 	sp.population					= 10;
 	kforth_mutate_options_defaults(&sp.kfmo);
 	sp.kfops						= *EvolveOperations();
 
+	kforth_ops_set_protected(&sp.kfops, "SPAWN");
+	kforth_ops_set_protected(&sp.kfops, "MAKE-BARRIER");
+
 	sp.strop.enabled				= 1;	// indicates if this strain is enabled or not
-	sp.strop.name[0]				= 0;	// strain name
-	sp.strop.look_mode				= 0;	// LOOK: 0=default/original. 1=cannot see thru self.
-	sp.strop.eat_mode				= 0;	// EAT: 0=default/original. 1=can eat self, killing self.
-	sp.strop.make_spore_mode		= 0;	// MAKE-SPORE: 0=default/original. sexual only. asexual only.
-	sp.strop.make_spore_energy		= 100;	// MAKE-SPORE energy
-	sp.strop.cmove_mode				= 0;	// CMOVE: 0=default.
-	sp.strop.omove_mode				= 0;	// OMOVE 0=default.
-	sp.strop.grow_mode				= 0;	// GROW: 0=default, 1=can grow to an occupied square shifting self cells
-	sp.strop.grow_energy			= 10;	// GROW energy
-	sp.strop.grow_size				= 50;	// GROW size
-	sp.strop.rotate_mode			= 0;	// ROTATE: 0=default 90 deg. 1=45 deg (if diagonal) must use center point of orgnism
-	sp.strop.cshift_mode			= 0;	// CSHIFT: 0=default.
-	sp.strop.make_organic_mode		= 0;	// MAKE-ORGANIC: 0=default
+	strcpy(sp.strop.name, sp.name);			// strain name. use profile name
+
+	sp.strop.look_mode			= 1;
+	sp.strop.eat_mode			= 640;
+	sp.strop.make_spore_mode	= 0;
+	sp.strop.make_spore_energy	= 100;
+	sp.strop.cmove_mode			= 0;
+	sp.strop.omove_mode			= 0;
+	sp.strop.grow_mode			= 0;
+	sp.strop.grow_energy		= 10;
+	sp.strop.grow_size			= 50;
+	sp.strop.rotate_mode		= 1;
+	sp.strop.cshift_mode		= 0;
+	sp.strop.make_organic_mode	= 0;
+	sp.strop.make_barrier_mode	= 0;
+	sp.strop.exude_mode			= 0;
+	sp.strop.shout_mode			= 0;
+	sp.strop.spawn_mode			= 0;
+	sp.strop.listen_mode		= 0;
+	sp.strop.broadcast_mode		= 0;
+	sp.strop.say_mode			= 0;
+	sp.strop.send_energy_mode	= 0;
+	sp.strop.read_mode			= 0;
+	sp.strop.write_mode			= 0;
+	sp.strop.key_press_mode		= 0;
+	sp.strop.send_mode			= 0;
 
 	EvolvePreferences_Add_StrainProfile(ep, &sp);
 
+	//////////////////////////
+	//
+	// add strain profile BasicInt
+	//
+
 	StrainProfile_Init(&sp);
 
-	strlcat(sp.name, 				"Basic", sizeof(sp.name));
-	strlcat(sp.seed_file,			"/tmp/basic.kf", sizeof(sp.seed_file));
-	strlcat(sp.description,			"Basic Creature.", sizeof(sp.description));
+	strlcat(sp.name, 				"BasicInt", sizeof(sp.name));
+	join_seed_file(sp.seed_file, sizeof(sp.seed_file), appdir, "seed_interrupt.kf");
+	strlcat(sp.description,			
+					"Basic Creature with Interrupts\n"
+					"Relaxed Eating, interrupts enabled for some instructions.\n"
+					, sizeof(sp.description));
+
+	sp.energy						= 100000;
+	sp.population					= 1;
+	kforth_mutate_options_defaults(&sp.kfmo);
+	sp.kfops						= *EvolveOperations();
+
+	kforth_ops_set_protected(&sp.kfops, "SPAWN");
+	kforth_ops_set_protected(&sp.kfops, "MAKE-BARRIER");
+
+	sp.strop.enabled				= 1;	// indicates if this strain is enabled or not
+	strcpy(sp.strop.name, sp.name);			// strain name. use profile name
+
+	sp.strop.look_mode			= 1;
+	sp.strop.eat_mode			= 640;
+	sp.strop.make_spore_mode	= 0;
+	sp.strop.make_spore_energy	= 100;
+	sp.strop.cmove_mode			= 0;
+	sp.strop.omove_mode			= 0;
+	sp.strop.grow_mode			= 0;
+	sp.strop.grow_energy		= 10;
+	sp.strop.grow_size			= 50;
+	sp.strop.rotate_mode		= 1;
+	sp.strop.cshift_mode		= 0;
+	sp.strop.make_organic_mode	= 0;
+	sp.strop.make_barrier_mode	= 0;
+	sp.strop.exude_mode			= 0;
+	sp.strop.shout_mode			= 0;
+	sp.strop.spawn_mode			= 0;
+	sp.strop.listen_mode		= 0;
+	sp.strop.broadcast_mode		= 0;
+	sp.strop.say_mode			= 0;
+	sp.strop.send_energy_mode	= 0;
+	sp.strop.read_mode			= 0;
+	sp.strop.write_mode			= 0;
+	sp.strop.key_press_mode		= 0;
+	sp.strop.send_mode			= 0;
+
+	EvolvePreferences_Add_StrainProfile(ep, &sp);
+
+	//////////////////////////
+	//
+	// add strain profile Shoot
+	//
+
+	StrainProfile_Init(&sp);
+
+	strlcat(sp.name, 				"Shoot", sizeof(sp.name));
+	join_seed_file(sp.seed_file, sizeof(sp.seed_file), appdir, "shoot3.kf");
+	strlcat(sp.description,
+					"Shooter\n"
+					"Has code for bullets.\n"
+					"bullet strain should be 5\n"
+					, sizeof(sp.description));
+	sp.energy						= 100000;
+	sp.population					= 1;
+	kforth_mutate_options_defaults(&sp.kfmo);
+	sp.kfops						= *EvolveOperations();
+
+	sp.kfmo.protected_codeblocks = 10; // this number needs to be adjusted based on "shoot3.kf"
+
+	kforth_ops_set_protected(&sp.kfops, "SPAWN");
+	kforth_ops_set_protected(&sp.kfops, "MAKE-BARRIER");
+
+	sp.strop.enabled				= 1;	// indicates if this strain is enabled or not
+	strcpy(sp.strop.name, sp.name);			// strain name. use profile name
+
+	sp.strop.look_mode			= 1;
+	sp.strop.eat_mode			= 640;
+	sp.strop.make_spore_mode	= 0;
+	sp.strop.make_spore_energy	= 100;
+	sp.strop.cmove_mode			= 0;
+	sp.strop.omove_mode			= 0;
+	sp.strop.grow_mode			= 0;
+	sp.strop.grow_energy		= 100;
+	sp.strop.grow_size			= 20;
+	sp.strop.rotate_mode		= 1;
+	sp.strop.cshift_mode		= 0;
+	sp.strop.make_organic_mode	= 0;
+	sp.strop.make_barrier_mode	= 0;
+	sp.strop.exude_mode			= 0;
+	sp.strop.shout_mode			= 0;
+	sp.strop.spawn_mode			= 15;
+	sp.strop.listen_mode		= 0;
+	sp.strop.broadcast_mode		= 0;
+	sp.strop.say_mode			= 0;
+	sp.strop.send_energy_mode	= 0;
+	sp.strop.read_mode			= 0;
+	sp.strop.write_mode			= 0;
+	sp.strop.key_press_mode		= 0;
+	sp.strop.send_mode			= 0;
+
+	EvolvePreferences_Add_StrainProfile(ep, &sp);
+
+	//////////////////////////
+	//
+	// add strain profile bullet
+	//
+
+	StrainProfile_Init(&sp);
+
+	strlcat(sp.name, 				"bullet", sizeof(sp.name));
+	join_seed_file(sp.seed_file, sizeof(sp.seed_file), appdir, "nullseed.kf");
+	strlcat(sp.description,
+					"a strain suitable to be used\n"
+					"for the bullet.\n"
+					, sizeof(sp.description));
+	sp.energy						= 1;
+	sp.population					= 1;
+	kforth_mutate_options_defaults(&sp.kfmo);
+	sp.kfops						= *EvolveOperations();
+
+	kforth_ops_set_protected(&sp.kfops, "SPAWN");
+	kforth_ops_set_protected(&sp.kfops, "MAKE-BARRIER");
+
+	sp.strop.enabled				= 1;	// indicates if this strain is enabled or not
+	strcpy(sp.strop.name, sp.name);			// strain name. use profile name
+
+	sp.strop.look_mode			= 1;
+	sp.strop.eat_mode			= 8;
+	sp.strop.make_spore_mode	= 0;
+	sp.strop.make_spore_energy	= 0;
+	sp.strop.cmove_mode			= 0;
+	sp.strop.omove_mode			= 0;
+	sp.strop.grow_mode			= 0;
+	sp.strop.grow_energy		= 0;
+	sp.strop.grow_size			= 0;
+	sp.strop.rotate_mode		= 1;
+	sp.strop.cshift_mode		= 0;
+	sp.strop.make_organic_mode	= 0;
+	sp.strop.make_barrier_mode	= 0;
+	sp.strop.exude_mode			= 0;
+	sp.strop.shout_mode			= 0;
+	sp.strop.spawn_mode			= 0;
+	sp.strop.listen_mode		= 0;
+	sp.strop.broadcast_mode		= 0;
+	sp.strop.say_mode			= 0;
+	sp.strop.send_energy_mode	= 0;
+	sp.strop.read_mode			= 0;
+	sp.strop.write_mode			= 0;
+	sp.strop.key_press_mode		= 0;
+	sp.strop.send_mode			= 0;
+
+	EvolvePreferences_Add_StrainProfile(ep, &sp);
+
+	//////////////////////////
+	//
+	// add strain profile Hanoi
+	//
+
+	StrainProfile_Init(&sp);
+
+	strlcat(sp.name, 				"Hanoi", sizeof(sp.name));
+	join_seed_file(sp.seed_file, sizeof(sp.seed_file), appdir, "towers_of_hanoi.kf");
+	strlcat(sp.description,
+				"Towers Of Hanoi"
+				, sizeof(sp.description));
+	sp.energy						= 100000;
+	sp.population					= 1;
+	kforth_mutate_options_defaults(&sp.kfmo);
+	sp.kfops						= *EvolveOperations();
+
+	kforth_ops_set_protected(&sp.kfops, "SPAWN");
+	kforth_ops_set_protected(&sp.kfops, "MAKE-BARRIER");
+
+	sp.strop.enabled				= 1;	// indicates if this strain is enabled or not
+	strcpy(sp.strop.name, sp.name);			// strain name. use profile name
+
+	sp.strop.look_mode			= 1;
+	sp.strop.eat_mode			= 8;
+	sp.strop.make_spore_mode	= 0;
+	sp.strop.make_spore_energy	= 0;
+	sp.strop.cmove_mode			= 0;
+	sp.strop.omove_mode			= 0;
+	sp.strop.grow_mode			= 0;
+	sp.strop.grow_energy		= 0;
+	sp.strop.grow_size			= 0;
+	sp.strop.rotate_mode		= 1;
+	sp.strop.cshift_mode		= 0;
+	sp.strop.make_organic_mode	= 0;
+	sp.strop.make_barrier_mode	= 0;
+	sp.strop.exude_mode			= 0;
+	sp.strop.shout_mode			= 0;
+	sp.strop.spawn_mode			= 0;
+	sp.strop.listen_mode		= 0;
+	sp.strop.broadcast_mode		= 0;
+	sp.strop.say_mode			= 0;
+	sp.strop.send_energy_mode	= 0;
+	sp.strop.read_mode			= 0;
+	sp.strop.write_mode			= 0;
+	sp.strop.key_press_mode		= 0;
+	sp.strop.send_mode			= 0;
+
+	EvolvePreferences_Add_StrainProfile(ep, &sp);
+
+	//////////////////////////
+	//
+	// add strain profile Tank
+	//
+
+	StrainProfile_Init(&sp);
+
+	strlcat(sp.name, 				"Tank", sizeof(sp.name));
+	join_seed_file(sp.seed_file, sizeof(sp.seed_file), appdir, "utank.kf");
+	strlcat(sp.description,
+				"User Controlled Tank."
+				, sizeof(sp.description));
+	sp.energy						= 100000;
+	sp.population					= 1;
+	kforth_mutate_options_defaults(&sp.kfmo);
+	sp.kfops						= *EvolveOperations();
+
+	kforth_ops_set_protected(&sp.kfops, "SPAWN");
+	kforth_ops_set_protected(&sp.kfops, "MAKE-BARRIER");
+
+	sp.strop.enabled				= 1;	// indicates if this strain is enabled or not
+	strcpy(sp.strop.name, sp.name);			// strain name. use profile name
+
+	sp.strop.look_mode			= 1;
+	sp.strop.eat_mode			= 8;
+	sp.strop.make_spore_mode	= 0;
+	sp.strop.make_spore_energy	= 0;
+	sp.strop.cmove_mode			= 0;
+	sp.strop.omove_mode			= 0;
+	sp.strop.grow_mode			= 0;
+	sp.strop.grow_energy		= 0;
+	sp.strop.grow_size			= 0;
+	sp.strop.rotate_mode		= 1;
+	sp.strop.cshift_mode		= 0;
+	sp.strop.make_organic_mode	= 0;
+	sp.strop.make_barrier_mode	= 0;
+	sp.strop.exude_mode			= 0;
+	sp.strop.shout_mode			= 0;
+	sp.strop.spawn_mode			= 15;
+	sp.strop.listen_mode		= 0;
+	sp.strop.broadcast_mode		= 0;
+	sp.strop.say_mode			= 0;
+	sp.strop.send_energy_mode	= 0;
+	sp.strop.read_mode			= 0;
+	sp.strop.write_mode			= 0;
+	sp.strop.key_press_mode		= 0;
+	sp.strop.send_mode			= 0;
+
+	EvolvePreferences_Add_StrainProfile(ep, &sp);
+
+	//////////////////////////
+	//
+	// add strain profile Nibbler
+	//
+
+	StrainProfile_Init(&sp);
+
+	strlcat(sp.name, 				"Nibbler", sizeof(sp.name));
+	join_seed_file(sp.seed_file, sizeof(sp.seed_file), appdir, "nibbler2.kf");
+	strlcat(sp.description,
+					"Nibbler.",
+					sizeof(sp.description));
 	sp.energy						= 100000;
 	sp.population					= 1;
 	kforth_mutate_options_defaults(&sp.kfmo);
 	sp.kfops						= *EvolveOperations();
 
 	sp.strop.enabled				= 1;	// indicates if this strain is enabled or not
-	sp.strop.name[0]				= 0;	// strain name, not meaningful here
-	sp.strop.look_mode				= 1;	// LOOK: 0=default/original. 1=cannot see thru self.
-	sp.strop.eat_mode				= 1;	// EAT: 0=default/original. 1=can eat self, killing self.
-	sp.strop.make_spore_mode		= 0;	// MAKE-SPORE: 0=default/original. sexual only. asexual only.
-	sp.strop.make_spore_energy		= 100;	// MAKE-SPORE energy
-	sp.strop.cmove_mode				= 0;	// CMOVE: 0=default.
-	sp.strop.omove_mode				= 0;	// OMOVE 0=default.
-	sp.strop.grow_mode				= 0;	// GROW mode
-	sp.strop.grow_energy			= 10;	// GROW energy
-	sp.strop.grow_size				= 10;	// GROW size
-	sp.strop.rotate_mode			= 1;	// ROTATE: 0=default 90 deg. 1=45 deg (if diagonal) must use center point of orgnism
-	sp.strop.cshift_mode			= 0;	// CSHIFT: 0=default.
-	sp.strop.make_organic_mode		= 0;	// MAKE-ORGANIC: 0=default
+	strcpy(sp.strop.name, sp.name);			// strain name. use profile name
+
+	sp.strop.look_mode			= 1;
+	sp.strop.eat_mode			= 8;
+	sp.strop.make_spore_mode	= 0;
+	sp.strop.make_spore_energy	= 0;
+	sp.strop.cmove_mode			= 0;
+	sp.strop.omove_mode			= 0;
+	sp.strop.grow_mode			= 0;
+	sp.strop.grow_energy		= 0;
+	sp.strop.grow_size			= 0;
+	sp.strop.rotate_mode		= 1;
+	sp.strop.cshift_mode		= 0;
+	sp.strop.make_organic_mode	= 0;
+	sp.strop.make_barrier_mode	= 0;
+	sp.strop.exude_mode			= 0;
+	sp.strop.shout_mode			= 0;
+	sp.strop.spawn_mode			= 0;
+	sp.strop.listen_mode		= 0;
+	sp.strop.broadcast_mode		= 0;
+	sp.strop.say_mode			= 0;
+	sp.strop.send_energy_mode	= 0;
+	sp.strop.read_mode			= 0;
+	sp.strop.write_mode			= 0;
+	sp.strop.key_press_mode		= 0;
+	sp.strop.send_mode			= 0;
+
+	EvolvePreferences_Add_StrainProfile(ep, &sp);
+
+	//////////////////////////
+	//
+	// add strain profile TerrainBot
+	//
+
+	StrainProfile_Init(&sp);
+
+	strlcat(sp.name, 				"TerrainBot", sizeof(sp.name));
+	join_seed_file(sp.seed_file, sizeof(sp.seed_file), appdir, "rnd_drawer.kf");
+	strlcat(sp.description,
+					"Terrain Bot.",
+					sizeof(sp.description));
+	sp.energy						= 100000;
+	sp.population					= 1;
+	kforth_mutate_options_defaults(&sp.kfmo);
+	sp.kfops						= *EvolveOperations();
+
+	kforth_ops_set_protected(&sp.kfops, "SPAWN");
+
+	sp.strop.enabled				= 1;	// indicates if this strain is enabled or not
+	strcpy(sp.strop.name, sp.name);			// strain name. use profile name
+
+	sp.strop.look_mode			= 1;
+	sp.strop.eat_mode			= 8;
+	sp.strop.make_spore_mode	= 0;
+	sp.strop.make_spore_energy	= 0;
+	sp.strop.cmove_mode			= 0;
+	sp.strop.omove_mode			= 0;
+	sp.strop.grow_mode			= 0;
+	sp.strop.grow_energy		= 0;
+	sp.strop.grow_size			= 0;
+	sp.strop.rotate_mode		= 1;
+	sp.strop.cshift_mode		= 0;
+	sp.strop.make_organic_mode	= 0;
+	sp.strop.make_barrier_mode	= 0;
+	sp.strop.exude_mode			= 0;
+	sp.strop.shout_mode			= 0;
+	sp.strop.spawn_mode			= 0;
+	sp.strop.listen_mode		= 0;
+	sp.strop.broadcast_mode		= 0;
+	sp.strop.say_mode			= 0;
+	sp.strop.send_energy_mode	= 0;
+	sp.strop.read_mode			= 0;
+	sp.strop.write_mode			= 0;
+	sp.strop.key_press_mode		= 0;
+	sp.strop.send_mode			= 0;
 
 	EvolvePreferences_Add_StrainProfile(ep, &sp);
 }
@@ -832,15 +1211,22 @@ void EvolvePreferences_Create_From_Scratch(EVOLVE_PREFERENCES *ep)
  * Else populate 'ep' with internal appication "first time" defaults.
  *
  */
-int EvolvePreferences_Load_Or_Create_From_Scratch(EVOLVE_PREFERENCES *ep, const char *filename, char *errbuf)
+int EvolvePreferences_Load_Or_Create_From_Scratch(EVOLVE_PREFERENCES *ep,
+							const char *filename,
+							const char *appdir,
+							char *errbuf )
 {
 	FILE *fp;
+
+	ASSERT( ep != NULL );
+	ASSERT( filename != NULL );
+	ASSERT( appdir != NULL );
 
 	// check if file exists
 	fp = fopen(filename, "r");
 	if( fp == NULL )
 	{
-		EvolvePreferences_Create_From_Scratch(ep);
+		EvolvePreferences_Create_From_Scratch(ep, appdir);
 		return 1;
 	}
 
